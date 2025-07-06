@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Ultra Wordlist",
+  "version": "1.0",
+  "description": "A simple Chrome extension.",
+  "permissions": ["storage", "notifications", "alarms", "contextMenus", "activeTab", "scripting", "tabs"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}
