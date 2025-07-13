@@ -1,36 +1,29 @@
 // Fetch the word list from chrome.storage.local and display it
-chrome.storage.local.get({ wordList: [] }, (result) => {
-    let wordList = result.wordList;
-    const wordListElement = document.getElementById('word-list');
-
+chrome.storage.local.get({ wordList: [] }, function (result) {
+    var wordList = result.wordList;
+    var wordListElement = document.getElementById('word-list');
     if (wordList.length === 0) {
         wordListElement.innerHTML = '<li>No words added yet.</li>';
-    } else {
-        wordList.forEach(word => {
-            const listItem = document.createElement('li');
-            listItem.textContent = word;
-
-            const deleteIcon = document.createElement('span');
+    }
+    else {
+        wordList.forEach(function (word) {
+            var listItem = document.createElement('li');
+            listItem.textContent = "".concat(word.text, ": ").concat(word.meaning); // Display the word and its meaning
+            var deleteIcon = document.createElement('span');
             deleteIcon.textContent = '✖';
             deleteIcon.className = 'delete-icon';
             listItem.appendChild(deleteIcon);
-
             // Add event listener to delete icon
-            deleteIcon.addEventListener('click', () => {
-                // get the wordlist again because it might have changed
-                // when the user has deleted a word
-                chrome.storage.local.get({ wordList: [] }, (result) => {
-                    wordList = result.wordList;
-                    const updatedWordList = wordList.filter(item => item !== word);
-                    chrome.storage.local.set({ wordList: updatedWordList }, () => {
+            deleteIcon.addEventListener('click', function () {
+                // Get the word list again because it might have changed
+                chrome.storage.local.get({ wordList: [] }, function (result) {
+                    var updatedWordList = result.wordList.filter(function (item) { return item.text !== word.text; });
+                    chrome.storage.local.set({ wordList: updatedWordList }, function () {
                         listItem.remove();
                     });
-                    // Notify other tabs to update their word list using the console log
-                    console.log(`Word list updated after deleting '${word}':`, updatedWordList);
+                    console.log("Word list updated after deleting '".concat(word.text, "':"), updatedWordList);
                 });
-                
             });
-
             wordListElement.appendChild(listItem);
         });
     }

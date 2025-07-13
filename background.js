@@ -1,87 +1,108 @@
-chrome.runtime.onInstalled.addListener(() => {
+var Word = /** @class */ (function () {
+    function Word(text, meaning) {
+        this.text = text; // The word itself
+        this.meaning = meaning; // The meaning of the word
+    }
+    // Method to display the word and its meaning
+    Word.prototype.display = function () {
+        return "".concat(this.text, ": ").concat(this.meaning);
+    };
+    return Word;
+}());
+// Create the context menu on extension installation
+chrome.runtime.onInstalled.addListener(function () {
     chrome.contextMenus.create({
         id: "addToWordList",
         title: "Add to word list",
         contexts: ["selection"]
     });
 });
-
-const injectedTabs = new Set(); // Track tabs where the script is injected
-
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+var injectedTabs = new Set(); // Track tabs where the script is injected
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener(function (info, tab) {
+    // If info and tab are valid, proceed
+    if (!info || !tab || !info.selectionText) {
+        console.warn('Context menu click without valid info or tab:', info, tab);
+        return;
+    }
     if (info.menuItemId === "addToWordList" && info.selectionText) {
-        console.log(`Adding to word list: ${info.selectionText}`);
-
-        // Check if the selection is too long or has too many spaces
-        const spaceCount = (info.selectionText.match(/ /g) || []).length;
+        var spaceCount = (info.selectionText.match(/ /g) || []).length;
         if (info.selectionText.length > 35 || spaceCount > 3) {
             if (!injectedTabs.has(tab.id)) {
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     files: ["content.js"]
-                }, () => {
+                }, function () {
                     injectedTabs.add(tab.id); // Mark the tab as injected
                     chrome.tabs.sendMessage(tab.id, {
                         type: "confirmAddToWordList",
                         text: info.selectionText
-                    }, (response) => {
+                    }, function (response) {
                         if (response && response.confirmed) {
-                            saveToWordList(info.selectionText);
+                            if (typeof info.selectionText === 'string') {
+                                saveToWordList(info.selectionText);
+                            }
+                            else {
+                                console.error('Selection text is not a string:', info.selectionText);
+                            }
                         }
                     });
                 });
-            } else {
+            }
+            else {
                 chrome.tabs.sendMessage(tab.id, {
                     type: "confirmAddToWordList",
                     text: info.selectionText
-                }, (response) => {
+                }, function (response) {
                     if (response && response.confirmed) {
-                        saveToWordList(info.selectionText);
+                        if (typeof info.selectionText === 'string') {
+                            saveToWordList(info.selectionText);
+                        }
+                        else {
+                            console.error('Selection text is not a string:', info.selectionText);
+                        }
                     }
                 });
             }
             return; // Exit to wait for user confirmation
         }
-
         saveToWordList(info.selectionText);
     }
 });
-
+// Save a word to the word list
 function saveToWordList(text) {
-    // Retrieve the existing word list from storage
-    chrome.storage.local.get({ wordList: [] }, (result) => {
-        const wordList = result.wordList;
-        wordList.push(text); // Add the new word to the list
-
+    chrome.storage.local.get({ wordList: [] }, function (result) {
+        var wordList = result.wordList;
+        var newWord = new Word(text, "No meaning available yet!"); // Create a new Word object
+        wordList.push(newWord); // TODO: Get the meaning of the word from some API
+        console.log('Saving word to list:', newWord);
         // Save the updated word list back to storage
-        chrome.storage.local.set({ wordList }, () => {
+        chrome.storage.local.set({ wordList: wordList }, function () {
             console.log('Word list updated:', wordList);
         });
     });
 }
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+// Handle messages from other parts of the extension
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     console.log('Message received in background script:', message);
     if (message.type === 'accountIconClick') {
         console.log('Handling accountIconClick message');
-        
-    } else {
-        console.warn('Unknown message type:', message.type);
+        sendResponse({ success: true });
     }
-});
-
-
-// receive the message to close the quiz tab
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "closeQuizTab") {
+    else if (message.type === "closeQuizTab") {
         console.log('Closing quiz tab');
-        chrome.tabs.query({ url: chrome.runtime.getURL("quiz.html") }, (tabs) => {
-            tabs.forEach(tab => {
-                chrome.tabs.remove(tab.id, () => {
+        chrome.tabs.query({ url: chrome.runtime.getURL("quiz.html") }, function (tabs) {
+            tabs.forEach(function (tab) {
+                chrome.tabs.remove(tab.id, function () {
                     console.log('Quiz tab closed successfully.');
                 });
             });
         });
         sendResponse({ success: true });
     }
+    else {
+        console.warn('Unknown message type:', message.type);
+        sendResponse({ success: false });
+    }
+    return true; // Keep the message channel open for async responses
 });

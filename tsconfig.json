@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES6", // Specify ECMAScript target version
+    "module": "ESNext", // Specify module code generation
+    "strict": true, // Enable strict type-checking options
+    "esModuleInterop": true, // Enable compatibility with CommonJS modules
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "outDir": "./dist", // Output directory for compiled files
+    "sourceMap": true, // Generate source maps for debugging
+    "lib": ["es2015", "dom"], // Include ES2015 and DOM libraries
+    "typeRoots": ["node_modules/@types"] // Specify the directory for type definitions
+  },
+  "include": ["./**/*.ts"], // Include all TypeScript files in the project
+  "exclude": ["node_modules"] // Exclude the node_modules directory
+  
+}

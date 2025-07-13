@@ -31,6 +31,13 @@ function displayRandomWord() {
             }
         });
 
+
+        // Delete the click button if there was no words in the list
+        if (wordList.length === 0) {
+            const quizSubmitButton = document.getElementById('quiz-submit');
+            quizSubmitButton.style.display = 'none'; // Hide the button if no words are available
+        }
+
     });
 }
 
